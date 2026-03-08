@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Task & Media Vault
+
+A full-stack task management app with image attachments, built with **Next.js 16**, **Supabase**, and **Tailwind CSS**.
+
+## Features
+
+- **Authentication** — Email/password signup & login via Supabase Auth
+- **Task CRUD** — Create, read, update, and delete tasks with server actions
+- **Image Uploads** — Attach images (JPEG/PNG/GIF/WebP, 5 MB max) to tasks via Supabase Storage
+- **Status Toggle** — Mark tasks as pending or completed with one click
+- **Filtering** — Filter dashboard by All / Pending / Completed
+- **Route Protection** — Middleware redirects unauthenticated users to login
+- **Row Level Security** — Every database query is scoped to the authenticated user
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router, Server Actions) |
+| Language | TypeScript |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth (`@supabase/ssr`) |
+| Storage | Supabase Storage |
+| Styling | Tailwind CSS 4 |
+| Icons | Lucide React |
+| Notifications | React Hot Toast |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── auth/callback/route.ts   # Email verification handler
+│   ├── dashboard/
+│   │   ├── actions.ts           # Server actions (CRUD + upload)
+│   │   ├── layout.tsx           # Protected layout (auth check)
+│   │   └── page.tsx             # Dashboard page (server component)
+│   ├── login/page.tsx           # Login page
+│   ├── signup/page.tsx          # Signup page
+│   ├── layout.tsx               # Root layout
+│   └── page.tsx                 # Landing page
+├── components/
+│   ├── dashboard-nav.tsx        # Top navigation bar
+│   ├── task-card.tsx            # Individual task card
+│   ├── task-list.tsx            # Filterable task grid + toolbar
+│   └── task-modal.tsx           # Create / Edit modal with image upload
+├── lib/supabase/
+│   ├── client.ts                # Browser Supabase client
+│   ├── middleware.ts            # Auth session refresh + route guards
+│   └── server.ts                # Server Supabase client
+├── types/
+│   └── task.ts                  # Task, TaskInsert, TaskUpdate types
+└── middleware.ts                # Next.js middleware entry point
+```
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone & Install
+
+```bash
+git clone <your-repo-url>
+cd task-vault
+npm install
+```
+
+### 2. Supabase Setup
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and run the contents of [`supabase/schema.sql`](supabase/schema.sql) — this creates the `tasks` table, RLS policies, and the `task-attachments` storage bucket
+3. Copy your project URL and anon key from **Settings → API**
+
+### 3. Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in your values:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+```
+
+### 4. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Schema
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | `uuid` | Primary key, auto-generated |
+| `created_at` | `timestamptz` | Defaults to `now()` |
+| `title` | `text` | Required |
+| `description` | `text` | Defaults to `''` |
+| `status` | `text` | `'pending'` or `'completed'` |
+| `user_id` | `uuid` | FK → `auth.users`, cascading delete |
+| `image_url` | `text` | Nullable, public URL from Supabase Storage |
 
-## Learn More
+**RLS Policies:** Each user can only SELECT, INSERT, UPDATE, and DELETE their own rows.
 
-To learn more about Next.js, take a look at the following resources:
+## Design Decisions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Server Actions over API Routes** — Keeps data mutations co-located with the UI, eliminates manual fetch calls, and works seamlessly with `revalidatePath` for cache invalidation.
+- **Server-side data fetching** — The dashboard page fetches tasks on the server, reducing client JS and enabling instant rendering.
+- **Middleware auth guard** — A single middleware file protects all `/dashboard/*` routes without repeating auth checks in every page.
+- **Image cleanup on delete** — When a task is deleted, its associated storage object is also removed to prevent orphaned files.
