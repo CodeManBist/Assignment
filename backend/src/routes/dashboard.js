@@ -74,34 +74,42 @@ router.get("/:batchId/dashboard", async (req, res) => {
   });
 });
 
-router.get("/:batchId/discrepancies", async (req, res) => {
-  const batch = await getOwnedBatch(req.params.batchId, req.userId);
-  if (!batch) return res.status(404).json({ detail: "Batch not found" });
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-  const { discrepancy_type, severity, search } = req.query;
-  const filter = { batchId: batch._id };
-  if (discrepancy_type) filter.discrepancyType = discrepancy_type;
-  if (severity) filter.severity = severity;
-  if (search) {
-    const re = new RegExp(search, "i");
-    filter.$or = [{ orderId: re }, { paymentRef: re }];
+router.get("/:batchId/discrepancies", async (req, res, next) => {
+  try {
+    const batch = await getOwnedBatch(req.params.batchId, req.userId);
+    if (!batch) return res.status(404).json({ detail: "Batch not found" });
+
+    const { discrepancy_type, severity, search } = req.query;
+    const filter = { batchId: batch._id };
+    if (discrepancy_type) filter.discrepancyType = discrepancy_type;
+    if (severity) filter.severity = severity;
+    if (search) {
+      const re = new RegExp(escapeRegex(search), "i");
+      filter.$or = [{ orderId: re }, { paymentRef: re }];
+    }
+
+    const rows = await Discrepancy.find(filter).sort({ amountAtRisk: -1 });
+    res.json(
+      rows.map((d) => ({
+        id: d._id,
+        discrepancy_type: d.discrepancyType,
+        order_id: d.orderId,
+        payment_ref: d.paymentRef,
+        order_amount: d.orderAmount,
+        payment_amount: d.paymentAmount,
+        amount_at_risk: d.amountAtRisk,
+        severity: d.severity,
+        details: d.details,
+        created_at: d.createdAt,
+      }))
+    );
+  } catch (err) {
+    next(err);
   }
-
-  const rows = await Discrepancy.find(filter).sort({ amountAtRisk: -1 });
-  res.json(
-    rows.map((d) => ({
-      id: d._id,
-      discrepancy_type: d.discrepancyType,
-      order_id: d.orderId,
-      payment_ref: d.paymentRef,
-      order_amount: d.orderAmount,
-      payment_amount: d.paymentAmount,
-      amount_at_risk: d.amountAtRisk,
-      severity: d.severity,
-      details: d.details,
-      created_at: d.createdAt,
-    }))
-  );
 });
 
 export default router;
