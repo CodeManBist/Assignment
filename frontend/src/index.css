@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  /* Ledger palette — a paper-and-ink audit tool, not a SaaS dashboard */
+  --color-paper: #eef0ea;
+  --color-paper-raised: #f8f9f4;
+  --color-ink: #161a22;
+  --color-ink-soft: #4a5160;
+  --color-ink-faint: #8b8f7f;
+  --color-rule: #d7d9c9;
+  --color-rule-strong: #b7bba5;
+
+  --color-teal: #1f5c52;
+  --color-teal-soft: #dce7e2;
+  --color-rust: #a6421b;
+  --color-rust-soft: #f2e2da;
+  --color-ochre: #93691f;
+  --color-ochre-soft: #f0e6cf;
+  --color-slate: #3e5670;
+  --color-slate-soft: #e2e7ec;
+
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  background: var(--color-paper);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-paper);
+}
+
+.font-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-ochre-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
