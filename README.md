@@ -411,11 +411,5 @@ frontend/
 
 ## Use of AI tools
 
-`<Fill this in honestly and specifically — this is the one section the
-brief explicitly asks you to be ready to defend commit-by-commit in the next
-round, so it should describe what you actually did, not what a generic
-"I used Claude Code to help" sentence would say. Useful things to be
-specific about: which parts you generated vs. wrote by hand, what you
-changed after generation, and any decisions (the tolerance, the discrepancy
-taxonomy, the temperature, the auth design) you can explain the reasoning
-for without notes.>`
+`I used ChatGPT and Claude as development assistants for brainstorming, debugging, explaining APIs, and generating small boilerplate code. I manually implemented the core application logic, reviewed and modified all AI-generated code, and tested every change before committing to ensure it matched the project requirements and coding style.
+`
